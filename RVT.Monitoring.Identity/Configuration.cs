@@ -10,7 +10,8 @@ namespace RVT.Monitoring.Identity
 {
     public static class Configuration
     {
-
+        public static string IDENTITYDB_CONNECION = "Server=DESKTOP-GDI15RS\\SQLEXPRESS;Database=RVT.Monitoring.Identity;Trusted_Connection=True;MultipleActiveResultSets=true";
+        public static string IDENTITY_USERS_CONNECION = "Server=DESKTOP-GDI15RS\\SQLEXPRESS;Database=RVT.Monitoring.Identity.User;Trusted_Connection=True;MultipleActiveResultSets=true";
         public static IEnumerable<ApiResource> GetApiResources()
         {
             return new List<ApiResource>
