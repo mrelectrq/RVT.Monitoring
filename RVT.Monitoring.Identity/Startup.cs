@@ -16,17 +16,21 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RVT.Monitoring.Identity.Data;
 using RVT.Monitoring.Identity.Data.IdentityModel;
+using RVT.Monitoring.Identity.Services;
+using AutoMapper;
+using RVT.Monitoring.Identity.Services.Messages;
 
 namespace RVT.Monitoring.Identity
 {
     public class Startup
     {
+        
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
-
+            
 
             services.AddDbContext<UserDbContext>(opt =>
             {
@@ -60,9 +64,14 @@ namespace RVT.Monitoring.Identity
                     opt.TokenCleanupInterval = 30;
 
                 });
+            services.AddAutoMapper(opt =>
+            {
+                opt.CreateMap<RegisterViewModel, RegistrationMessage>();
+            });
+            services.AddScoped<IServiceManager,ServiceManager>();
 
-            //services.AddDefaultIdentity<IdentityUser>()
-            //    .AddRoles<IdentityRole>(); Need to continue 
+
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
