@@ -9,6 +9,6 @@ namespace RVT.Monitoring.Identity.Data.IdentityModel
     public class RVTUser : IdentityUser<Guid>
     {
          public string PhoneNumber { get; set; }
-        public DateTime RegisterTimeStamp { get; set; }
+         public DateTime RegisterTimeStamp { get; set; }
     }
 }
