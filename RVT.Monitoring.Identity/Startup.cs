@@ -16,17 +16,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RVT.Monitoring.Identity.Data;
 using RVT.Monitoring.Identity.Data.IdentityModel;
-using RVT.Monitoring.Identity.Services;
 using AutoMapper;
-using RVT.Monitoring.Identity.Services.Messages;
+
 
 namespace RVT.Monitoring.Identity
 {
     public class Startup
-    {
-        
-        // This method gets called by the runtime. Use this method to add services to the container.
-        // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
+    {  
         public void ConfigureServices(IServiceCollection services)
         {
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
@@ -37,18 +33,21 @@ namespace RVT.Monitoring.Identity
                 opt.UseSqlServer(Configuration.IDENTITY_USERS_CONNECION);
             });
 
-            services.AddIdentity<RVTUser,RVTRole>()
+            services.AddIdentity<RVTUser, RVTRole>()
                .AddEntityFrameworkStores<UserDbContext>()
                .AddDefaultUI()
                .AddDefaultTokenProviders()
-               .AddRoles<RVTRole>();
+               .AddRoles<RVTRole>()
+               .AddDefaultTokenProviders();
+           
             services.AddMvc(opt =>
             {
                 opt.EnableEndpointRouting = false;
-                });
+            });
+
+
             services.AddIdentityServer()
                 .AddDeveloperSigningCredential()
-                .AddTestUsers(TestUsers.Users)
                 .AddConfigurationStore(opt =>
                 {
                     opt.ConfigureDbContext = builder =>
@@ -63,18 +62,22 @@ namespace RVT.Monitoring.Identity
                     opt.EnableTokenCleanup = true;
                     opt.TokenCleanupInterval = 30;
 
-                });
+                })
+                .AddAspNetIdentity<RVTUser>();
             services.AddAutoMapper(opt =>
             {
-                opt.CreateMap<RegisterViewModel, RegistrationMessage>();
+                
             });
-            services.AddScoped<IServiceManager,ServiceManager>();
-
+            services.AddAuthorization();
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = $"/Account/Login";
+                options.LogoutPath = $"/Account/Logout";
+                options.AccessDeniedPath = $"/Account/AccessDenied";
+            });
 
 
         }
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
@@ -82,56 +85,42 @@ namespace RVT.Monitoring.Identity
                 app.UseDeveloperExceptionPage();
             }
 
-            InitializeDatabase(app);
             app.UseIdentityServer();
             app.UseStaticFiles();
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseMvcWithDefaultRoute();
 
-            //app.UseRouting();
-
-            //app.UseEndpoints(endpoints =>
-            //{
-            //    endpoints.MapGet("/", async context =>
-            //    {
-            //        await context.Response.WriteAsync("Hello World!");
-            //    });
-            //});
         }
 
         private void InitializeDatabase(IApplicationBuilder app)
         {
             using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
             {
-                serviceScope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
 
-                var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
-                context.Database.Migrate();
-                if (!context.Clients.Any())
-                {
-                    foreach (var client in Configuration.GetClients())
-                    {
-                        context.Clients.Add(client.ToEntity());
-                    }
-                    context.SaveChanges();
-                }
+                var context = serviceScope.ServiceProvider.GetRequiredService<RoleManager<RVTRole>>();
 
-                if (!context.IdentityResources.Any())
-                {
-                    foreach (var resource in Configuration.GetIdentityResources())
-                    {
-                        context.IdentityResources.Add(resource.ToEntity());
-                    }
-                    context.SaveChanges();
-                }
 
-                if (!context.ApiResources.Any())
+
+
+                var roles = new List<RVTRole>
                 {
-                    foreach (var resource in Configuration.GetApiResources())
-                    {
-                        context.ApiResources.Add(resource.ToEntity());
-                    }
-                    context.SaveChanges();
+                    new RVTRole {Name="User",NormalizedName="Lucrator",
+                        Description="Sample user that can access authorized actions"},
+                    new RVTRole {Name= "Moderator", NormalizedName="Lucrator nivel 2 ",
+                        Description="User level 2 that can edit database arleady active actions"},
+                    new RVTRole {Name= "Administrator",NormalizedName="Administrator de sistem"},
+                    new RVTRole {Name= "Owner",NormalizedName="Administratia intreprinderii"}
+                };
+
+
+                
+                foreach (var item in roles)
+                {
+                    var resp = context.CreateAsync(item).Result;
                 }
+                //context.SaveChanges();
+
             }
         }
     }
