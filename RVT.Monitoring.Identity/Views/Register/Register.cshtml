@@ -44,12 +44,9 @@
                             <input type="password" class="form-control" placeholder="ConfirmPassword" asp-for="ConfirmPassword" autocomplete="off">
                         </div>
                         <div class="form-group">
-                            <label asp-for="Username"></label>
-                            <input class="form-control" placeholder="Username" asp-for="Username" autofocus>
-                        </div>
-                        <div class="form-group">
                             <label asp-for="Email"></label>
                             <input class="form-control" placeholder="Email" asp-for="Email" autofocus>
+                            <span asp-validation-for="Email" class="small text-danger"></span>
                         </div>
                         <div class="form-group">
                             <label asp-for="PhoneNumber"></label>
@@ -62,8 +59,6 @@
                 </div>
             </div>
         </div>
-
-
 
     </div>
 </div>
